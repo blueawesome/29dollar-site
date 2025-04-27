@@ -1,0 +1,18 @@
+---
+// src/pages/customize.astro
+import MainLayout from '../layouts/MainLayout.astro';
+import { siteType } from '../store/siteStore';
+---
+
+<MainLayout title="Customize Your Site - 29Dollar.Site">
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-bold mb-4">Customize Your {siteType.get()} Website</h1>
+    <p class="text-lg">Adjust these controls to find your perfect vibe</p>
+  </div>
+  
+  <!-- This will be replaced with a React component later -->
+  <div class="card bg-base-100 shadow-xl p-6">
+    <h2 class="text-2xl font-bold mb-4">Coming soon: Vibe controls</h2>
+    <p>This is where your customization sliders will appear.</p>
+  </div>
+</MainLayout>

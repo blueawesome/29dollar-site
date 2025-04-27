@@ -1,0 +1,203 @@
+---
+---
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Netlify Integration | 29Dollar.Site</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .container {
+      margin-top: 2rem;
+    }
+    .btn {
+      display: inline-block;
+      background: #00ad9f;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 1rem;
+      margin-bottom: 1rem;
+    }
+    .steps {
+      margin: 2rem 0;
+    }
+    .step {
+      display: flex;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .step-number {
+      background: #00ad9f;
+      color: white;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+    .result {
+      background: #f5f8fa;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-top: 2rem;
+      white-space: pre-wrap;
+      overflow: auto;
+      max-height: 300px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Netlify Integration</h1>
+  
+  <div class="container">
+    <h2>Testing Flow</h2>
+    
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div>
+          <strong>Connect to Netlify</strong>
+          <p>Authorize 29Dollar.Site to access your Netlify account</p>
+          <a href="/api/netlify/auth" class="btn">Connect to Netlify</a>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">2</div>
+        <div>
+          <strong>Deploy Test Site</strong>
+          <p>Create and deploy a test site to your Netlify account</p>
+          <button id="deploy-btn" class="btn" disabled>Deploy Test Site</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="result" class="result hidden">
+      <h3>Result:</h3>
+      <div id="result-content"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Check if we're connected to Netlify
+    const isConnected = sessionStorage.getItem('netlifyConnected') === 'true';
+    const deployBtn = document.getElementById('deploy-btn');
+    
+    if (isConnected) {
+      deployBtn.disabled = false;
+    }
+    
+    // Handle deployment
+    deployBtn.addEventListener('click', async () => {
+      try {
+        deployBtn.disabled = true;
+        deployBtn.textContent = 'Deploying...';
+        
+        // Create sample site files
+        const siteFiles = {
+          'index.html': `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>29Dollar.Site Test</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>29Dollar.Site Test</h1>
+    <p>This site was created and deployed via the Netlify API!</p>
+    <p>Timestamp: ${new Date().toISOString()}</p>
+  </div>
+  <script src="js/main.js"><\/script>
+</body>
+</html>`,
+          'css/style.css': `body {
+  font-family: system-ui, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  line-height: 1.6;
+  color: #333;
+}
+.container {
+  background: #f5f8fa;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+h1 {
+  color: #00ad9f;
+}`,
+          'js/main.js': `console.log('Hello from 29Dollar.Site!');
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Site loaded at:', new Date().toLocaleString());
+});`
+        };
+        
+        // Deploy the site
+        const response = await fetch('/api/netlify/deploy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ siteFiles })
+        });
+        
+        const data = await response.json();
+        
+        // Show the result
+        const resultElement = document.getElementById('result');
+        const resultContentElement = document.getElementById('result-content');
+        
+        resultElement.classList.remove('hidden');
+        
+        if (response.ok) {
+          resultContentElement.innerHTML = `
+            <p>✅ Site successfully deployed!</p>
+            <p><strong>Site Name:</strong> ${data.site.name}</p>
+            <p><strong>Site URL:</strong> <a href="${data.site.url}" target="_blank">${data.site.url}</a></p>
+            <p><strong>Admin URL:</strong> <a href="${data.site.admin_url}" target="_blank">${data.site.admin_url}</a></p>
+          `;
+        } else {
+          resultContentElement.innerHTML = `
+            <p>❌ Deployment failed</p>
+            <p><strong>Error:</strong> ${data.error || 'Unknown error'}</p>
+            <p><strong>Message:</strong> ${data.message || 'No details available'}</p>
+          `;
+        }
+      } catch (error) {
+        console.error('Error deploying site:', error);
+        
+        const resultElement = document.getElementById('result');
+        const resultContentElement = document.getElementById('result-content');
+        
+        resultElement.classList.remove('hidden');
+        resultContentElement.innerHTML = `
+          <p>❌ Deployment failed</p>
+          <p><strong>Error:</strong> ${error.message || 'Unknown error'}</p>
+        `;
+      } finally {
+        deployBtn.disabled = false;
+        deployBtn.textContent = 'Deploy Test Site';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+// src/pages/netlify-auth.astro
+// The page that initiates the Netlify OAuth flow
+
+---
+---
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connect to Netlify | 29Dollar.Site</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .auth-container {
+      text-align: center;
+      margin-top: 3rem;
+    }
+    .btn {
+      display: inline-block;
+      background: #00ad9f;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .info {
+      background: #f5f8fa;
+      border-left: 4px solid #00ad9f;
+      padding: 1rem;
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h1>Connect to Netlify</h1>
+    <p>To deploy your site, we need to connect to your Netlify account.</p>
+    
+    <div class="info">
+      <p>
+        <strong>What will happen next:</strong> 
+        You'll be redirected to Netlify to authorize 29Dollar.Site. 
+        Then, we'll create and deploy your site directly to your Netlify account.
+      </p>
+    </div>
+    
+    <a href="/api/netlify/auth" class="btn">Connect to Netlify</a>
+  </div>
+</body>
+</html>

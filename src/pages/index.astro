@@ -1,16 +1,16 @@
 ---
-
+// src/pages/index.astro
+import MainLayout from '../layouts/MainLayout.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout title="29Dollar.Site - Websites made fun">
+  <div class="hero min-h-[80vh]">
+    <div class="hero-content text-center">
+      <div class="max-w-md">
+        <h1 class="text-5xl font-bold mb-8">29Dollar.Site</h1>
+        <p class="py-6">Build and deploy a fully personalized, AI-assisted website for just $29—no subscriptions, no hosting setup, no tech knowledge required.</p>
+        <a href="/build" class="btn btn-primary btn-lg">Start Building</a>
+      </div>
+    </div>
+  </div>
+</MainLayout>

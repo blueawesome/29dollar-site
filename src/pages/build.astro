@@ -1,0 +1,14 @@
+---
+// src/pages/build.astro
+import MainLayout from '../layouts/MainLayout.astro';
+import BuilderFlow from '../components/BuilderFlow';
+import ErrorBoundary from '../components/ErrorBoundary';
+---
+
+<MainLayout title="Build Your Site - 29Dollar.Site">
+  <div class="container mx-auto py-8">
+    <ErrorBoundary client:load>
+      <BuilderFlow client:load />
+    </ErrorBoundary>
+  </div>
+</MainLayout>
