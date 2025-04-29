@@ -1,0 +1,29 @@
+---
+// src/pages/playground/index.astro
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Playground - 29Dollar.Site">
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold mb-4">Website Playground</h1>
+    <p class="mb-6">Let's build your perfect site! Start by selecting a site type below:</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+      <!-- Site type cards would go here -->
+      <div class="border rounded-lg p-4 hover:shadow-md cursor-pointer">
+        <h3 class="font-bold">Personal Website</h3>
+        <p class="text-sm text-gray-600">Portfolio, resume, or personal page</p>
+      </div>
+      
+      <div class="border rounded-lg p-4 hover:shadow-md cursor-pointer">
+        <h3 class="font-bold">Event Website</h3>
+        <p class="text-sm text-gray-600">Wedding, birthday, or special occasion</p>
+      </div>
+      
+      <div class="border rounded-lg p-4 hover:shadow-md cursor-pointer">
+        <h3 class="font-bold">Business Site</h3>
+        <p class="text-sm text-gray-600">Local business, freelancer, or consultant</p>
+      </div>
+    </div>
+  </div>
+</SiteLayout>

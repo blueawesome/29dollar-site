@@ -1,0 +1,42 @@
+---
+// src/layouts/SiteLayout.astro
+import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/astro/components";
+const { title } = Astro.props;
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title || "29Dollar.Site"}</title>
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <header class="py-4 px-6 flex justify-between items-center bg-white shadow-sm">
+      <div>
+        <a href="/" class="text-xl font-bold">29Dollar.Site</a>
+      </div>
+      <div>
+        <SignedIn>
+          <!-- This content only shows when the user is signed in -->
+          <div class="flex items-center gap-4">
+            <a href="/site-hq" class="text-blue-600 hover:text-blue-800">Site HQ</a>
+            <UserButton />
+          </div>
+        </SignedIn>
+        <SignedOut>
+          <!-- This content only shows when the user is signed out -->
+          <SignInButton mode="modal" />
+        </SignedOut>
+      </div>
+    </header>
+    
+    <main class="container mx-auto py-6 px-4">
+      <slot /> <!-- This renders the page content -->
+    </main>
+    
+    <footer class="py-4 px-6 text-center text-gray-500 mt-8 text-sm">
+      © 2025 29Dollar.Site | One-time payment, forever yours
+    </footer>
+  </body>
+</html>

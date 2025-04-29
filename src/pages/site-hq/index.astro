@@ -1,0 +1,22 @@
+---
+// src/pages/site-hq/index.astro
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Site HQ - 29Dollar.Site">
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold mb-4">Welcome to your Site HQ</h1>
+    <p class="mb-6">This is your 90s-inspired command center for managing your sites.</p>
+    
+    <div class="border-t pt-4 mt-4">
+      <h2 class="text-xl font-semibold mb-3">Your Sites</h2>
+      <!-- This would eventually be populated from your backend -->
+      <div class="bg-gray-100 p-4 text-center rounded">
+        <p>You don't have any sites yet.</p>
+        <a href="/playground" class="text-blue-600 hover:underline mt-2 inline-block">
+          Create your first site
+        </a>
+      </div>
+    </div>
+  </div>
+</SiteLayout>
