@@ -1,6 +1,12 @@
 ---
 // src/pages/playground/index.astro
 import SiteLayout from "../../layouts/SiteLayout.astro";
+
+// This is the correct way to protect pages with Clerk in Astro
+const { userId, redirectToSignIn } = Astro.locals.auth();
+if (!userId) {
+  return redirectToSignIn();
+}
 ---
 
 <SiteLayout title="Playground - 29Dollar.Site">

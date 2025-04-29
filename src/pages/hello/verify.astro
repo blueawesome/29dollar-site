@@ -1,0 +1,69 @@
+---
+// src/pages/hello/verify.astro
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { logEvent } from "../../lib/logEvent";
+
+// This tells Astro this page has client-side scripts
+export const prerender = false;
+---
+
+<SiteLayout title="Verifying - 29Dollar.Site">
+  <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold text-center mb-4">Verifying your magic link...</h1>
+    <p class="text-center text-gray-600">Please wait while we connect you to your portal.</p>
+    
+    <div class="flex justify-center mt-8">
+      <div class="w-12 h-12 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+    </div>
+  </div>
+</SiteLayout>
+
+<script>
+  // Handle the magic link verification
+  import { Clerk } from "@clerk/clerk-js";
+  
+  // Initialize Clerk
+  const clerk = new Clerk(import.meta.env.PUBLIC_CLERK_PUBLISHABLE_KEY);
+  await clerk.load();
+  
+  // Process the verification
+  if (window.location.href.includes("?")) {
+    try {
+      // Handle the verification
+      const result = await clerk.handleMagicLinkVerification({
+        redirectUrl: "/portal",
+      });
+      
+      // Log successful verification
+      if (result.status === "complete") {
+        // Get user details
+        const user = clerk.user;
+        
+        // Log the event (using fetch to call your API)
+        await fetch("/api/test-log", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            type: "magic_link_verification",
+            payload: {
+              email: user.primaryEmailAddress?.emailAddress,
+              timestamp: new Date().toISOString()
+            }
+          })
+        });
+      }
+    } catch (err) {
+      console.error("Error verifying magic link:", err);
+      // Redirect to sign-in page after a delay
+      setTimeout(() => {
+        window.location.href = "/hello";
+      }, 3000);
+    }
+  } else {
+    // No verification parameters, redirect to login
+    window.location.href = "/hello";
+  }
+</script>

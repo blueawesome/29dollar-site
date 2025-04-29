@@ -1,0 +1,43 @@
+---
+// src/pages/portal/index.astro
+import SiteLayout from "../../layouts/SiteLayout.astro";
+
+// Protect this page
+const { userId, redirectToSignIn } = Astro.locals.auth();
+if (!userId) {
+  return redirectToSignIn();
+}
+---
+
+<SiteLayout title="Portal - 29Dollar.Site">
+  <div class="max-w-4xl mx-auto">
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h1 class="text-2xl font-bold mb-4">Your Site Portal</h1>
+      <p class="mb-6">Welcome to your magical command center. From here, you can manage your sites or create new ones.</p>
+      
+      <div class="flex space-x-4">
+        <a 
+          href="/wizard" 
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        >
+          Create New Site
+        </a>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-3">Your Sites</h2>
+      
+      <!-- This would eventually be populated from your backend -->
+      <div class="bg-gray-100 p-8 text-center rounded">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+        <p class="text-gray-600 mb-4">You don't have any sites yet.</p>
+        <a href="/wizard" class="text-blue-600 hover:underline inline-block">
+          Create your first site with the Wizard
+        </a>
+      </div>
+    </div>
+  </div>
+</SiteLayout>

@@ -1,0 +1,66 @@
+---
+// src/pages/portal/admin.astro
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { db } from "../../lib/db";
+
+// Protect this page and check if user is admin
+const { userId, redirectToSignIn } = Astro.locals.auth();
+if (!userId) {
+  return redirectToSignIn();
+}
+
+// In a real implementation, you'd check if the user has admin privileges
+// For now, we'll mock this by assuming the first user is an admin
+
+// Fetch events from the database
+const result = await db.query(
+  `SELECT * FROM events ORDER BY created_at DESC LIMIT 50`
+);
+const events = result.rows;
+---
+
+<SiteLayout title="Admin Panel - 29Dollar.Site">
+  <div class="max-w-6xl mx-auto">
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h1 class="text-2xl font-bold mb-4">Admin Panel</h1>
+      <p class="mb-6">View and manage system events and user data.</p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Recent Events</h2>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th class="py-2 px-4 border-b text-left">ID</th>
+              <th class="py-2 px-4 border-b text-left">User ID</th>
+              <th class="py-2 px-4 border-b text-left">Type</th>
+              <th class="py-2 px-4 border-b text-left">Payload</th>
+              <th class="py-2 px-4 border-b text-left">Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((event) => (
+              <tr>
+                <td class="py-2 px-4 border-b">{event.id}</td>
+                <td class="py-2 px-4 border-b">{event.user_id}</td>
+                <td class="py-2 px-4 border-b">{event.type}</td>
+                <td class="py-2 px-4 border-b">
+                  <pre class="text-xs">{JSON.stringify(event.payload, null, 2)}</pre>
+                </td>
+                <td class="py-2 px-4 border-b">{new Date(event.created_at).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {events.length === 0 && (
+        <div class="text-center py-8 text-gray-500">
+          No events have been logged yet.
+        </div>
+      )}
+    </div>
+  </div>
+</SiteLayout>

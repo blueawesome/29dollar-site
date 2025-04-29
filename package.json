@@ -4,11 +4,11 @@
   "start": "node ./dist/server/entry.mjs",
   "version": "0.0.1",
   "scripts": {
-  "dev": "astro dev",
-  "start": "node server-entry.js",
-  "build": "astro build",
-  "preview": "astro preview"
-},
+    "dev": "astro dev",
+    "start": "node server-entry.js",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
   "dependencies": {
     "@astrojs/cloudflare": "^12.5.1",
     "@astrojs/node": "^9.2.1",
@@ -27,6 +27,8 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.503.0",
     "nanostores": "^1.0.1",
+    "pg": "^8.15.6",
+    "psql": "^0.0.1",
     "querystring": "^0.2.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
