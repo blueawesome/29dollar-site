@@ -1,20 +1,21 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
-import node from '@astrojs/node'; // <-- replacing cloudflare adapter with node
+import node from '@astrojs/node';
 import clerk from '@clerk/astro';
 
-// https://astro.build/config
 export default defineConfig({
-  output: 'server',  // <-- REQUIRED for Clerk
+  output: 'server',
   adapter: node({
-    mode: 'standalone', // Same idea as cloudflare advanced
+    mode: 'standalone',
+    port: process.env.PORT || 4321,    // <--- ADD THIS
+    host: '0.0.0.0'                    // <--- ADD THIS
   }),
   integrations: [
     tailwind({
       applyBaseStyles: false,
     }),
     react(),
-    clerk(), // <-- Added Clerk integration
+    clerk(),
   ],
 });
