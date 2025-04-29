@@ -1,8 +1,13 @@
 services:
   - type: web
     name: 29dollar-site
-    env: node
-    plan: starter
-    buildCommand: npm install astro; npm run build
-    startCommand: npm run preview
-    branch: main
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: node ./dist/server/entry.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: 18.18.0
+      - key: SITE_URL
+        value: https://your-29dollar-site.onrender.com
+      - key: HOST
+        value: 0.0.0.0
