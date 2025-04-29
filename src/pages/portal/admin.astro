@@ -1,7 +1,7 @@
 ---
 // src/pages/portal/admin.astro
 import SiteLayout from "../../layouts/SiteLayout.astro";
-import { db } from "../../lib/db";
+import { query } from "../../lib/db"; // Using the query function instead of db
 
 // Protect this page and check if user is admin
 const { userId, redirectToSignIn } = Astro.locals.auth();
@@ -9,14 +9,10 @@ if (!userId) {
   return redirectToSignIn();
 }
 
-// In a real implementation, you'd check if the user has admin privileges
-// For now, we'll mock this by assuming the first user is an admin
-
 // Fetch events from the database
-const result = await db.query(
+const events = await query(
   `SELECT * FROM events ORDER BY created_at DESC LIMIT 50`
 );
-const events = result.rows;
 ---
 
 <SiteLayout title="Admin Panel - 29Dollar.Site">
