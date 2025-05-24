@@ -1,23 +1,13 @@
-// src/pages/auth/signout.astro
----
-export const prerender = false
+// src/pages/api/auth/signout.ts (Temporary Diagnostic Version)
+import type { APIRoute } from 'astro';
 
-if (Astro.request.method === 'POST') {
-  // Clear the session cookies
-  const response = new Response(null, {
-    status: 302,
-    headers: {
-      'Location': '/hello',
-      'Set-Cookie': [
-        'sb-access-token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0',
-        'sb-refresh-token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0'
-      ].join(', ')
-    }
-  })
-  
-  return response
-}
+export const POST: APIRoute = async ({ redirect }) => {
+  console.log('[API /auth/signout] Signout attempted (diagnostic version).');
+  return redirect('/hello?message=Signout POC', 302);
+};
 
-// If not POST, redirect to portal
-return Astro.redirect('/portal')
----
+// Add a GET handler as well for easy browser testing if needed for this diagnostic
+export const GET: APIRoute = async ({ redirect }) => {
+  console.log('[API /auth/signout] Signout GET attempted (diagnostic version).');
+  return redirect('/hello?message=Signout POC GET', 302);
+};
