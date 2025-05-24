@@ -1,20 +1,80 @@
 ---
 // src/pages/hello/index.astro
 import SiteLayout from "../../layouts/SiteLayout.astro";
-import { SignIn } from "@clerk/astro/components";
----
+import { supabase } from "../../lib/supabase"; // Ensure this path is correct
 
-<SiteLayout title="Hello - 29Dollar.Site">
-  <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-    <h1 class="text-2xl font-bold mb-6 text-center">Welcome to 29Dollar.Site</h1>
+console.log(`[Page: /hello] Top of page. Astro.locals.session exists: ${!!Astro.locals.session}`);
+
+export const prerender = false;
+// Check if user is ALREADY logged in using session data from middleware
+// Astro.locals.session is populated by src/middleware.ts
+if (Astro.locals.session) {
+  console.log(`[Page: /hello] Astro.locals.session found (User: ${Astro.locals.session.user.email}). Redirecting to /portal.`);
+  return Astro.redirect('/portal');
+} else {
+  console.log(`[Page: /hello] No Astro.locals.session. Displaying login form.`);
+}
+
+// Handle form submission
+let message = '';
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const email = formData.get('email')?.toString();
+
+  if (!email) {
+    error = 'Email is required';
+  } else {
+    // This signInWithOtp call was causing the error because the supabase client
+    // was an improperly configured @supabase/ssr browser client.
+    // Now it should use the standard @supabase/supabase-js client.
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${Astro.url.origin}/auth/callback`,
+      },
+    });
+
+    if (authError) {
+      error = authError.message;
+      console.error("Error in signInWithOtp:", authError); // Add some logging
+    } else {
+      message = 'Check your email for the magic link!';
+    }
+  }
+}
+// ... rest of your hello/index.astro
+---
+<!-- Your HTML for the form -->
+<SiteLayout title="Hello - Project">
+  <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <h1 class="text-2xl font-bold mb-6 text-center">Sign In</h1>
     <p class="text-gray-600 mb-6 text-center">
-      Enter your email below and we'll send you a magic link for instant access.
+      Enter your email to receive a magic link.
     </p>
-    
-    <SignIn path="/hello" redirectUrl="/portal" />
-    
-    <div class="mt-6 text-center text-sm text-gray-500">
-      <p>No passwords to remember - just quick, secure access.</p>
-    </div>
+
+    <form method="POST" class="space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        Send Magic Link
+      </button>
+    </form>
+
+    {message && <p class="mt-4 p-3 text-sm text-green-700 bg-green-100 rounded-md">{message}</p>}
+    {error && <p class="mt-4 p-3 text-sm text-red-700 bg-red-100 rounded-md">{error}</p>}
   </div>
 </SiteLayout>

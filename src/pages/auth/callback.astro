@@ -1,0 +1,199 @@
+---
+// src/pages/auth/callback.astro
+export const prerender = false;
+
+const config = {
+  supabaseUrl: import.meta.env.PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+};
+
+// Server-side log (runs when Astro builds/renders this page shell initially)
+console.log('[Callback Server] Supabase URL from env:', config.supabaseUrl);
+console.log('[Callback Server] Supabase Anon Key from env:', config.supabaseAnonKey ? 'Loaded' : 'MISSING or EMPTY');
+---
+<html>
+<head>
+  <title>Authenticating...</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9fafb; color: #111827; text-align: center; }
+    .container { padding: 2rem; background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    p { color: #4b5563; }
+    #log-container { margin-top:1em; padding:1em; border:1px solid #ccc; width:80%; max-width:600px; text-align:left; background:#f0f0f0; font-size:0.8em; }
+    #log { white-space: pre-wrap; max-height: 250px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Processing Sign In</h1>
+    <p id="status">Initializing...</p>
+    <div id="log-container">
+      <strong>Client-Side Log:</strong>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script define:vars={{ supabaseUrl: config.supabaseUrl, supabaseAnonKey: config.supabaseAnonKey }} type="module">
+    // Import Supabase client directly from CDN to bypass local module resolution issues
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+
+    let clientSupabaseInstance = null;
+    let redirecting = false; // Flag to prevent multiple actions if auth state changes rapidly
+    let authSubscription = null; // To store the subscription object for cleanup
+
+    function clientLog(message) {
+      console.log('[Client Auth Callback]', message); // Also log to browser console
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${message}\n`;
+      logEl.scrollTop = logEl.scrollHeight; // Auto-scroll log
+    }
+
+    function cleanupSubscription() {
+      if (authSubscription && typeof authSubscription.unsubscribe === 'function') {
+        clientLog('Unsubscribing from onAuthStateChange listener...');
+        authSubscription.unsubscribe();
+        authSubscription = null; // Clear the reference
+        clientLog('Unsubscribed.');
+      } else {
+        clientLog('No active onAuthStateChange subscription to unsubscribe or unsubscribe method missing.');
+      }
+    }
+
+    clientLog(`Script started. URL: ${window.location.href}`);
+    clientLog(`Hash: ${window.location.hash || '(no hash found)'}`);
+
+    // supabaseUrl and supabaseAnonKey are injected by Astro's define:vars
+    clientLog(`Received from server: Supabase URL = ${supabaseUrl || 'NOT DEFINED!'}`);
+    clientLog(`Received from server: Supabase Anon Key = ${supabaseAnonKey ? 'DEFINED (ending with ...' + supabaseAnonKey.slice(-6) + ')' : 'NOT DEFINED!'}`);
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      const errorMsg = "CRITICAL CLIENT-SIDE ERROR: Supabase URL or Anon Key is missing. Cannot proceed. Check .env variables and server restart.";
+      clientLog(errorMsg);
+      statusEl.textContent = errorMsg;
+      // No point in continuing if these are missing
+    } else {
+      clientLog('Supabase client library imported from CDN. Initializing Supabase client...');
+      statusEl.textContent = 'Supabase client library loaded. Initializing...';
+
+      try {
+        clientSupabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+        clientLog('Supabase client initialized successfully.');
+
+        clientLog('Setting up onAuthStateChange listener...');
+        // Store the subscription data object to be able to unsubscribe
+        const { data: { subscription } } = clientSupabaseInstance.auth.onAuthStateChange(async (event, session) => {
+          // Assign to outer scope so cleanupSubscription can access it
+          if (!authSubscription && subscription) {
+            authSubscription = subscription;
+          }
+
+          if (redirecting) {
+            clientLog(`Already processing or redirecting, ignoring auth event: ${event}`);
+            return;
+          }
+
+          clientLog(`onAuthStateChange event received: ${event}`);
+          if (session) {
+            clientLog(`Session details: User ID: ${session.user.id}, Email: ${session.user.email}, Expires At: ${new Date(session.expires_at * 1000).toLocaleTimeString()}`);
+          } else {
+            clientLog('No session object in this auth event.');
+          }
+
+          if (event === 'SIGNED_IN' && session) {
+            clientLog(`✅ SIGNED_IN event processed. User: ${session.user.email}.`);
+            statusEl.textContent = 'Sign-in successful! Setting session cookie...';
+            redirecting = true; // Set flag immediately
+            cleanupSubscription(); // Unsubscribe once we've got SIGNED_IN
+
+            const accessToken = session.access_token;
+            const refreshToken = session.refresh_token;
+
+            if (!accessToken || !refreshToken) {
+                clientLog('CRITICAL ERROR: Access token or refresh token is missing from session object after SIGNED_IN.');
+                statusEl.textContent = 'Error: Crucial token missing from session. Cannot set cookie. Check console.';
+                return; 
+            }
+
+            clientLog('Attempting to set session cookie via /api/auth/set-cookie...');
+            try {
+              const response = await fetch('/api/auth/set-cookie', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessToken, refreshToken }),
+              });
+              
+              const responseBody = await response.json(); // Attempt to parse JSON for more info
+
+              if (response.ok) {
+                clientLog(`Successfully called /api/auth/set-cookie. API response: ${JSON.stringify(responseBody)}. Redirecting to /portal...`);
+                window.location.replace('/portal');
+              } else {
+                clientLog(`ERROR calling /api/auth/set-cookie: ${response.status} ${response.statusText}. API response: ${JSON.stringify(responseBody)}`);
+                statusEl.textContent = `Error setting server session cookie: ${responseBody.error || response.statusText}. Check server logs.`;
+                // Consider redirecting to /hello with an error message
+                // window.location.replace(`/hello?error=${encodeURIComponent(responseBody.error || 'cookie_set_api_failed')}`);
+              }
+            } catch (fetchError) {
+              clientLog(`FETCH EXCEPTION calling /api/auth/set-cookie: ${fetchError.message || String(fetchError)}`);
+              statusEl.textContent = `Network error setting server session cookie: ${fetchError.message || 'Fetch failed'}. Check server logs.`;
+              // Consider redirecting to /hello with an error message
+              // window.location.replace(`/hello?error=${encodeURIComponent(fetchError.message || 'cookie_set_fetch_exception')}`);
+            }
+
+          } else if (event === 'INITIAL_SESSION' && session) {
+            clientLog('INITIAL_SESSION event with an active session. This usually means user was already logged in.');
+             // If there's no specific token in the hash, assume user is already authenticated with valid cookies.
+            if (!window.location.hash.includes('access_token') && !window.location.hash.includes('error')) {
+                clientLog('No new token in URL hash. User likely has existing valid session. Redirecting to /portal...');
+                statusEl.textContent = 'Already signed in. Redirecting...';
+                redirecting = true;
+                cleanupSubscription();
+                window.location.replace('/portal');
+            } else {
+                clientLog('INITIAL_SESSION event, but also new token data in URL hash. Waiting for SIGNED_IN event to process it.');
+            }
+          } else if (event === 'INITIAL_SESSION' && !session) {
+            clientLog('INITIAL_SESSION event, but no session found yet. Supabase client may be processing URL hash or waiting for token.');
+            statusEl.textContent = 'Processing authentication state...';
+          } else if (event === 'SIGNED_OUT') {
+            clientLog('SIGNED_OUT event received. Redirecting to /hello.');
+            statusEl.textContent = 'Signed out. Redirecting...';
+            redirecting = true;
+            cleanupSubscription();
+            window.location.replace('/hello?message=signed_out');
+          }
+          // You could add handlers for other events like TOKEN_REFRESHED, USER_UPDATED, PASSWORD_RECOVERY if needed.
+        });
+
+        clientLog('onAuthStateChange listener is now active.');
+
+        // Initial check of URL hash (Supabase client handles this automatically on init, but good for logging)
+        if (window.location.hash.includes('access_token')) {
+            clientLog('Access token detected in URL hash. Supabase client will process it.');
+        } else if (window.location.hash.includes('error')) {
+            const params = new URLSearchParams(window.location.hash.substring(1)); // Remove #
+            const errorType = params.get('error');
+            const errorDesc = params.get('error_description') || 'No specific error description.';
+            clientLog(`ERROR in URL hash detected: Type: ${errorType}, Description: ${errorDesc}`);
+            statusEl.textContent = `Authentication Error: ${errorDesc}`;
+            // Consider redirecting to /hello with error
+            // window.location.replace(`/hello?error=${encodeURIComponent(errorDesc)}`);
+        } else {
+            clientLog('No access_token or error found in URL hash. This is expected if navigating here directly without a token.');
+            // If no token and not already redirecting, could redirect to /hello after a timeout
+            // setTimeout(() => { if (!redirecting) { window.location.replace('/hello?error=no_token_on_callback_page'); }}, 7000);
+        }
+
+      } catch (e) {
+        const errorMessage = e.message || String(e);
+        clientLog(`CRITICAL SCRIPT ERROR during Supabase client initialization or auth setup: ${errorMessage} Stack: ${e.stack}`);
+        statusEl.textContent = `Client-side script error: ${errorMessage}. Check console.`;
+      }
+    }
+  </script>
+</body>
+</html>

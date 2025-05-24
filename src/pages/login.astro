@@ -1,0 +1,23 @@
+---
+// src/pages/login.astro
+import { supabase } from '../lib/supabase';
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const email = formData.get('email')?.toString();
+
+  if (email) {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${Astro.url.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      return Astro.redirect(`/login?error=${error.message}`);
+    }
+    return Astro.redirect('/login?message=Check your email!');
+  }
+}
+---

@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
-import clerk from '@clerk/astro';
+// import clerk from '@clerk/astro';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 
@@ -13,7 +13,7 @@ export default defineConfig({
     host: true // This is key - setting host: true ensures binding to 0.0.0.0
   }),
   integrations: [
-    clerk(),
+    // clerk(),
     tailwind({ applyBaseStyles: false }),
     react(),
   ]

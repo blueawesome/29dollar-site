@@ -1,23 +1,85 @@
 ---
-// src/pages/hello/verify.astro
 import SiteLayout from "../../layouts/SiteLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+// Mark as server-rendered
+export const prerender = false;
+
+// Initialize status variables
+let status = "Verifying your session...";
+let isError = false;
+
+// Check if we have a hash fragment (this is where Supabase puts the access token)
+const hash = Astro.url.hash;
+console.log("URL hash:", hash); // For debugging
+
+// Try to exchange the token for a session
+let exchangeAttempted = false;
+
+if (hash && hash.includes('access_token')) {
+  try {
+    // This tells Supabase to process the hash fragment
+    const { error } = await supabase.auth.getSession();
+    exchangeAttempted = true;
+    
+    if (error) {
+      console.error("Error exchanging token:", error);
+      status = `Error: ${error.message}`;
+      isError = true;
+    }
+  } catch (e) {
+    console.error("Exception during token exchange:", e);
+    status = "An unexpected error occurred";
+    isError = true;
+  }
+}
+
+// Now check if we have a session
+const { data, error } = await supabase.auth.getSession();
+const session = data?.session;
+
+if (!session) {
+  if (exchangeAttempted) {
+    status = "Unable to verify your session. Please try logging in again.";
+  } else if (hash) {
+    status = "Invalid authentication link. Please request a new one.";
+  } else {
+    status = "No authentication token found. Please log in.";
+  }
+  isError = true;
+  console.log("Session check failed:", { hash, error, exchangeAttempted });
+} else {
+  status = "You're verified! Redirecting to your dashboard...";
+  // Redirect to portal after a brief delay (handled by client-side script)
+}
 ---
 
 <SiteLayout title="Verifying - 29Dollar.Site">
   <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-    <h1 class="text-2xl font-bold text-center mb-4">Verifying your magic link...</h1>
-    <p class="text-center text-gray-600">Please wait while we connect you to your portal.</p>
-    
-    <div class="flex justify-center mt-8">
-      <div class="w-12 h-12 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
-    </div>
-  </div>
-</SiteLayout>
+    <h1 class="text-2xl font-bold text-center mb-4">Checking your login...</h1>
+    <p class="text-center" class:list={isError ? "text-red-600" : "text-gray-600"}>
+      {status}
+    </p>
 
-<script>
-  // Redirect to portal after a moment
-  // The verification is handled automatically by Clerk
-  setTimeout(() => {
-    window.location.href = "/portal";
-  }, 2000);
-</script>
+    {isError ? (
+      <div class="mt-6 text-center">
+        <a href="/hello" class="text-indigo-600 hover:text-indigo-700 font-medium">
+          Go back to login
+        </a>
+      </div>
+    ) : (
+      <div class="flex justify-center mt-8">
+        <div class="w-12 h-12 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+      </div>
+    )}
+  </div>
+
+  {!isError && (
+    <script>
+      // Only redirect if successfully verified
+      setTimeout(() => {
+        window.location.href = "/portal";
+      }, 1500);
+    </script>
+  )}
+</SiteLayout>

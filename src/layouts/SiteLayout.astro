@@ -1,6 +1,6 @@
 ---
 // src/layouts/SiteLayout.astro
-import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/astro/components";
+// import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/astro/components";
 const { title } = Astro.props;
 ---
 <html lang="en">
@@ -10,6 +10,8 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title || "29Dollar.Site"}</title>
+
+    
   </head>
   <body class="min-h-screen bg-gray-50">
     <header class="py-4 px-6 flex justify-between items-center bg-white shadow-sm">
@@ -17,17 +19,7 @@ const { title } = Astro.props;
         <a href="/" class="text-xl font-bold">29Dollar.Site</a>
       </div>
       <div>
-        <SignedIn>
-          <!-- This content only shows when the user is signed in -->
-          <div class="flex items-center gap-4">
-            <a href="/site-hq" class="text-blue-600 hover:text-blue-800">Site HQ</a>
-            <UserButton />
-          </div>
-        </SignedIn>
-        <SignedOut>
-          <!-- This content only shows when the user is signed out -->
-          <SignInButton mode="modal" />
-        </SignedOut>
+        <!-- Auth buttons or user info will go here once Supabase is fully integrated -->
       </div>
     </header>
     
@@ -38,5 +30,70 @@ const { title } = Astro.props;
     <footer class="py-4 px-6 text-center text-gray-500 mt-8 text-sm">
       © 2025 29Dollar.Site | One-time payment, forever yours
     </footer>
+
+    <script>
+      (async () => {
+        const { supabase } = await import('../lib/supabase');
+        
+        // Set up auth state observer
+        supabase.auth.onAuthStateChange((event, session) => {
+          console.log('Auth state changed:', event, session ? 'User is logged in' : 'No user');
+          
+          // Redirect based on auth state
+          if (event === 'SIGNED_IN') {
+            // User just signed in - redirect to portal if not already there
+            const path = window.location.pathname;
+            if (!path.startsWith('/portal') && !path.startsWith('/wizard')) {
+              window.location.href = '/portal';
+            }
+          } else if (event === 'SIGNED_OUT') {
+            // User just signed out - redirect to login
+            window.location.href = '/hello';
+          }
+        });
+      })();
+    </script>
+
+<script>
+  // Add comprehensive auth state debugging
+  (async () => {
+    try {
+      const { supabase } = await import('../lib/supabase');
+      
+      console.log("Setting up auth state listener");
+      
+      // Listen for all auth state changes
+      supabase.auth.onAuthStateChange((event, session) => {
+        console.log("=== AUTH STATE CHANGE ===");
+        console.log("Event:", event);
+        console.log("Session:", session);
+        console.log("User:", session?.user?.email || "No user");
+        console.log("========================");
+        
+        // Handle specific events
+        if (event === 'SIGNED_IN') {
+          console.log("User signed in successfully");
+          // Don't auto-redirect here, let the callback page handle it
+        } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out");
+          if (window.location.pathname !== '/hello') {
+            window.location.href = '/hello';
+          }
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log("Token refreshed");
+        }
+      });
+      
+      // Also check current session on page load
+      const { data, error } = await supabase.auth.getSession();
+      console.log("Initial session check:", { data, error });
+      
+    } catch (error) {
+      console.error("Error setting up auth listener:", error);
+    }
+  })();
+</script>
+
   </body>
 </html>
+
