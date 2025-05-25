@@ -1,5 +1,6 @@
 # build output
 dist/
+!poc_static_assets/dist/
 # generated types
 .astro/
 
